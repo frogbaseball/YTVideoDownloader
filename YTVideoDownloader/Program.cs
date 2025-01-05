@@ -38,13 +38,13 @@ namespace YTVideoDownloader {
                 case "1":
                     AnsiConsole.Clear();
                     SetURL();
-                    var urlValid1 = await IsURLValidAsync();
-                    if (urlValid1 == true) {
-                        Task[] tasks1 = { DownloadVideoAsync() };
-                        await Task.WhenAll(tasks1);
+                    bool urlValid = await IsURLValidAsync();
+                    if (urlValid == true) {
+                        Task[] tasks = { DownloadVideoAsync(url, path) };
+                        await Task.WhenAll(tasks);
                         PressAnyKeyToContinue();
                     }
-                    if (urlValid1 == false) {
+                    if (urlValid == false) {
                         if (url != "1") {
                             AnsiConsole.MarkupLine($"[red]\"{url}\"[/] is not a valid URL. \n");
                             PressAnyKeyToContinue();
@@ -55,13 +55,13 @@ namespace YTVideoDownloader {
                 case "2":
                     AnsiConsole.Clear();
                     SetURL();
-                    var urlValid2 = await IsURLValidAsync();
-                    if (urlValid2 == true) {
-                        Task[] tasks2 = { DownloadAudioAsync() };
-                        await Task.WhenAll(tasks2);
+                    bool urlValidd = await IsURLValidAsync();
+                    if (urlValidd == true) {
+                        Task[] tasks = { DownloadAudioAsync(url, path) };
+                        await Task.WhenAll(tasks);
                         PressAnyKeyToContinue();                        
                     }
-                    if (urlValid2 == false) {
+                    if (urlValidd == false) {
                         if (url != "1") {
                             AnsiConsole.MarkupLine($"[red]\"{url}\"[/] is not a valid URL. \n");
                             PressAnyKeyToContinue();
@@ -80,11 +80,17 @@ namespace YTVideoDownloader {
                     break;
             }
         }
+        /// <summary>
+        /// Asks the user to replace the old URL with a new one.
+        /// </summary>
         static void SetURL() {
             AnsiConsole.WriteLine("Set the URL of the video you want to download (type '1' to exit):");
             Input();
             url = input;
         }
+        /// <summary>
+        /// Returns true if its possible to get metadata from the video using the URL.
+        /// </summary>
         static async Task<bool> IsURLValidAsync() {
             try {
                 var youtube = new YoutubeClient();
@@ -94,7 +100,10 @@ namespace YTVideoDownloader {
                 return false;
             }
         }
-        static async Task DownloadVideoAsync() {
+        /// <summary>
+        /// Download youtube video using its URL.
+        /// </summary>
+        static async Task DownloadVideoAsync(string url, string path) {
             var youtube = new YoutubeClient();
             var video = await youtube.Videos.GetAsync(url);
             var videoName = CheckIfNameHasValidSymbols(video.Title);
@@ -112,23 +121,29 @@ namespace YTVideoDownloader {
             // mix audio and video streams
             var streamInfos = new IStreamInfo[] { audioStreamInfo, videoStreamInfo };
             AnsiConsole.WriteLine($"\nDownloading... (AUDIO: {audioStreamInfo.Size} VIDEO: {videoStreamInfo.Size}) \n");
+            //mix the stream infos and create a file in the bin/debug folder
             await youtube.Videos.DownloadAsync(streamInfos, new ConversionRequestBuilder($"{videoName}.mp4").SetFFmpegPath($"{Environment.CurrentDirectory}\\..\\..\\ffmpeg-windows-x64\\ffmpeg.exe").Build());
             AnsiConsole.Markup($"[lime]Downloaded![/]\nin {path}\\{videoName}.mp4 \n\n");
             //move file from the bin\debug folder to the desired path
             File.Move($"{Environment.CurrentDirectory}\\{videoName}.mp4", $"{path}\\{videoName}.mp4");
         }
-        static async Task DownloadAudioAsync() {
+        /// <summary>
+        /// Download youtube audio using its URL.
+        /// </summary>
+        static async Task DownloadAudioAsync(string url, string path) {
             var youtube = new YoutubeClient();
             var video = await youtube.Videos.GetAsync(url);
             var videoName = CheckIfNameHasValidSymbols(video.Title);
             var streamManifest = await youtube.Videos.Streams.GetManifestAsync(url);
             var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
-            var stream = await youtube.Videos.Streams.GetAsync(streamInfo);
             AnsiConsole.WriteLine($"\nDownloading... ({streamInfo.Size}) \n");
+            //create file in the desired path
             await youtube.Videos.Streams.DownloadAsync(streamInfo, $"{path}\\{videoName}.mp3");
             AnsiConsole.Markup($"[lime]Downloaded![/]\nin {path}\\{videoName}.mp3\n\n");
         }
-
+        /// <summary>
+        /// Changes the current desired path to a new, user set one.
+        /// </summary>
         static async Task SetPathAsync() {
             AnsiConsole.Clear();
             AnsiConsole.WriteLine($"Set a new download path (type '1' to exit): ");
@@ -147,6 +162,10 @@ namespace YTVideoDownloader {
                 await Menu();
             }
         }
+        /// <summary>
+        /// Replaces specific characters in a string with an X, if theyre not supported as a windows file name.
+        /// </summary>
+        /// <returns>A string that can be a file name.</returns>
         static string CheckIfNameHasValidSymbols(string name) {
             char[] newName = name.ToCharArray();
             for (int i = 0; i < newName.Length; i++) {
@@ -156,6 +175,9 @@ namespace YTVideoDownloader {
             }
             return new string(newName);
         }
+        /// <summary>
+        /// User Input.
+        /// </summary>
         static void Input() {
             try {
                 input = Console.ReadLine();
@@ -163,6 +185,9 @@ namespace YTVideoDownloader {
                 Input();
             }
         }
+        /// <summary>
+        /// Asks the user to press any key to continue.
+        /// </summary>
         static void PressAnyKeyToContinue() {
             AnsiConsole.Markup("[lime]Press Any Key To Continue...[/] \n");
             Console.ReadKey();
