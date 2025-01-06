@@ -1,6 +1,5 @@
 ﻿using Spectre.Console;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,10 +9,13 @@ using YoutubeExplode.Videos.Streams;
 
 namespace YTVideoDownloader {
     internal class Program {
-        static private string path;
+        static private string path; //user's desired path for video/audio downloads
         static private string input;
         static private string url;
         static async Task Main(string[] args) {
+            if (!Directory.Exists(FileData.dataPath)) {
+                FileData.CreateDirectoryAndFile();
+            }
             path = FileData.ReadFromFile();
             if (path == string.Empty || path == null) {
                 path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);

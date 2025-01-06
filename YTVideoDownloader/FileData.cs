@@ -7,12 +7,16 @@ using System.IO;
 
 namespace YTVideoDownloader {
     internal static class FileData {
-        static string path = $"{Environment.CurrentDirectory}\\..\\..\\CustomData\\data.txt";
+        public readonly static string dataPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\\YTVideoDownloader\\CustomData\\data.txt";
+        public static void CreateDirectoryAndFile() {
+            Directory.CreateDirectory(Path.GetDirectoryName(dataPath));
+            File.Create(dataPath).Close();
+        }
         public static void SaveToFile(string message) {
-            File.WriteAllText(path, message);
+            File.WriteAllText(dataPath, message);
         }
         public static string ReadFromFile() {
-            var file = File.ReadAllLines(path);
+            var file = File.ReadAllLines(dataPath);
             if (file.Length == 0) {
                 return null;
             }
